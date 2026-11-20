@@ -14,20 +14,31 @@
 
 ---
 
-## نصب خودکار با یک API Token (GitHub Actions + Pages)
+## نصب خودکار با یک API Token (ویزارد یک‌فیلدی)
 
-صفحه راهنمای نصب:
+سریع‌ترین راه — فقط توکن را وارد کنید:
+
 ```text
 https://mohammad-a12.github.io/MYX-panel/
 ```
 
-فقط یک Secret لازم است:
+1. در Cloudflare یک **Custom API Token** با دو دسترسی بسازید:
+   - `Account → Workers Scripts → Edit`
+   - `Account → Account Settings → Read`
+2. توکن را در ویزارد بالا وارد کنید و دکمه را بزنید.
 
-1. در Cloudflare یک **Custom API Token** با دسترسی `Account → Workers Scripts → Edit` بسازید.
-2. در GitHub در مسیر **Settings → Secrets and variables → Actions** یک Secret با نام `CLOUDFLARE_API_TOKEN` بسازید.
-3. از تب **Actions → Deploy MYX panel to Cloudflare → Run workflow** اجرا کنید.
+ویزارد درخواست را به **رلهٔ MYX** می‌فرستد (`https://relay.amirtf.qzz.io`). رله فقط یک کار می‌کند: از سمت سرور به API رسمی Cloudflare وصل می‌شود، اکانت را از خود توکن تشخیص می‌دهد، UUID تصادفی می‌سازد، Worker تک‌فایلی پنل را Deploy می‌کند و `workers.dev` را فعال می‌کند.
 
-Action به‌صورت خودکار اکانت را تشخیص می‌دهد، UUID تصادفی می‌سازد، Worker تک‌فایلی را Deploy می‌کند، `workers.dev` را فعال می‌کند و لینک پنل و سابسکریپشن را در Summary نشان می‌دهد. نیازی به وارد کردن Account ID نیست.
+- رله هیچ توکنی را ذخیره یا لاگ نمی‌کند؛ توکن فقط در حافظهٔ همان درخواست می‌ماند.
+- سورس پنل توسط رله از این مخزن خوانده می‌شود (`dist/myx-panel.js`)، پس هر تغییر در `public/` با یک push اعمال می‌شود.
+- کد رله: [`relay/worker.js`](relay/worker.js) — مرورگر به‌دلیل CORS نمی‌تواند مستقیم به API کلودفلر وصل شود، به همین دلیل واسط لازم است.
+
+### روش جایگزین (GitHub Actions)
+
+اگر نمی‌خواهید توکن از واسطه عبور کند، می‌توانید همان کار را با GitHub Actions انجام دهید (توکن در Secret گیت‌هاب می‌ماند):
+
+1. در **Settings → Secrets and variables → Actions** یک Secret با نام `CLOUDFLARE_API_TOKEN` بسازید.
+2. از تب **Actions → Deploy MYX panel to Cloudflare → Run workflow** اجرا کنید.
 
 ---
 
@@ -67,5 +78,7 @@ npx wrangler dev --local --port 8789
 
 ## محدودیت‌های VLESS روی Workers
 - **UDP پشتیبانی نمی‌شود** (مثل بعضی قابلیت‌های صوتی/تصویری و بازی‌ها)؛ تلگرام صوتی، وب عادی و دانلود TCP کار می‌کنند.
-- سقف پلن رایگان Workers روزانه ۱۰۰٬۰۰۰ درخواست است؛ برای استفاده شخصی و چند کاربر مناسب است.
+- **اتصال به هاست‌های پشت Cloudflare ممکن نیست**: Workers نمی‌توانند با `connect()` به دامنه‌هایی که خودشان پشت Cloudflare هستند سوکت باز کنند. برای این حالت متغیر محیطی `PROXYIP` را روی یک IP غیر-Cloudflare تنظیم کنید (در پنل هم قابل وارد کردن است).
+- **`workers.dev` برای بعضی اکانت‌ها در دسترس نیست** (به‌خصوص اکانت‌هایی که پیش‌تر برای پروکسی علامت‌گذاری شده‌اند). در آن حالت یک **دامنهٔ اختصاصی** (Custom Domain) به Worker وصل کنید — همین کار برای پنل نمایشی این پروژه انجام شد.
+- سقف پلن رایگان Workers روزانه ۱۰۰٬۰۰۰ درخواست است؛ برای استفاده شخصی و چند کاربر مناسب است. توجه: سقف تعداد Worker در پلن رایگان ۱۰۰ عدد است؛ نزدیک شدن به آن باعث خطاهای 522/1101 در استقرار می‌شود.
 - UUID را محرمانه نگه دارید و مقدار پیش‌فرض `public/_worker.js` را برای استفاده واقعی تغییر دهید.

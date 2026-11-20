@@ -54,7 +54,7 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
 
     if (url.pathname === "/health") {
-      return json({ ok: true, service: "myx-deploy-relay" }, 200, cors);
+      return json({ ok: true, service: "myx-relay-live" }, 200, cors);
     }
 
     if (url.pathname !== "/deploy" || request.method !== "POST") {
