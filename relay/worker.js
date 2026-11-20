@@ -208,7 +208,11 @@ async function ensurePagesProject({ token, accountId, workerName, config }) {
   const create = await fetch(`${API}/accounts/${accountId}/pages/projects`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ name: workerName, production_branch: "main", deployment_configs: { production: config } }),
+    body: JSON.stringify({
+      name: workerName,
+      production_branch: "main",
+      deployment_configs: { production: config, preview: { fail_open: false } },
+    }),
   }).then((r) => r.json());
   if (create?.success) return;
 
@@ -221,16 +225,19 @@ async function ensurePagesProject({ token, accountId, workerName, config }) {
     .then((r) => r.json());
 
   if (get?.success) {
-    const existing = get.result?.deployment_configs?.production || {};
-    const merged = {
-      ...existing,
-      compatibility_date: existing.compatibility_date || config.compatibility_date,
-      env_vars: { ...(existing.env_vars || {}), ...(config.env_vars || {}) },
-    };
+    const configs = get.result?.deployment_configs || {};
+    const prod = { ...(configs.production || {}) };
+    const prev = { ...(configs.preview || {}) };
+    // Cloudflare می‌خواهد fail_open در هر دو محیط یکسان باشد
+    prod.compatibility_date = prod.compatibility_date || config.compatibility_date;
+    prod.env_vars = { ...(prod.env_vars || {}), ...(config.env_vars || {}) };
+    if (prod.fail_open === undefined) prod.fail_open = false;
+    if (prev.fail_open === undefined) prev.fail_open = prod.fail_open;
+
     const patch = await fetch(`${API}/accounts/${accountId}/pages/projects/${workerName}`, {
       method: "PATCH",
       headers,
-      body: JSON.stringify({ deployment_configs: { production: merged } }),
+      body: JSON.stringify({ deployment_configs: { production: prod, preview: prev } }),
     }).then((r) => r.json());
     if (patch?.success) return;
     throw new UserError(pagesError(patch?.errors?.[0]?.code, patch?.errors?.[0]?.message));
