@@ -19,6 +19,23 @@ function randomName() {
 
 nameInput.value = randomName();
 
+// اگر صفحهٔ کش‌شده قدیمی باشد و انتخابگر محل استقرار نداشته باشد، همین‌جا می‌سازیم
+(function ensureTargetPicker() {
+  if (document.querySelector(".target-picker")) return;
+  const box = document.createElement("div");
+  box.className = "field";
+  box.innerHTML = `
+    <span>محل استقرار <small>(اگر workers.dev باز نشد، Pages را انتخاب کنید)</small></span>
+    <div class="target-picker" role="radiogroup">
+      <label class="target-option"><input type="radio" name="target" value="worker" checked />
+        <span class="target-box"><b>☁️ Worker</b><small>دامنه: <code>name.workers.dev</code></small></span></label>
+      <label class="target-option"><input type="radio" name="target" value="pages" />
+        <span class="target-box"><b>📄 Pages</b><small>دامنه: <code>name.pages.dev</code></small></span></label>
+    </div>`;
+  const nameField = document.getElementById("workerName")?.closest(".field");
+  if (nameField && nameField.parentElement) nameField.after(box);
+})();
+
 $("toggleToken").addEventListener("click", () => {
   tokenInput.type = tokenInput.type === "password" ? "text" : "password";
   $("toggleToken").textContent = tokenInput.type === "password" ? "👁" : "🙈";
@@ -80,6 +97,9 @@ form.addEventListener("submit", async (event) => {
     $("infoLink").textContent = data.infoUrl || data.panelUrl + "/info";
     $("infoLink").href = data.infoUrl || data.panelUrl + "/info";
     $("openPanel").href = data.panelUrl;
+    const badge = $("targetBadge");
+    badge.textContent = data.target === "pages" ? "📄 Pages" : "☁️ Worker";
+    badge.hidden = false;
     const note = $("targetNote");
     if (data.note) {
       note.textContent = "💡 " + data.note;

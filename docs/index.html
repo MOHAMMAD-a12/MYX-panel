@@ -7,7 +7,7 @@
   <title>MYX Auto Deploy — ساخت خودکار پنل</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body>
   <nav>
@@ -87,7 +87,7 @@
       <div class="error-box" id="errorBox" hidden></div>
 
       <div class="result-box" id="resultBox" hidden>
-        <div class="success-head"><span>✓</span><div><h3>پنل شما آماده است!</h3><p>حالا می‌توانید وارد پنل شوید یا کانفیگ را در کلاینت اضافه کنید.</p></div></div>
+        <div class="success-head"><span>✓</span><div><h3>پنل شما آماده است! <span class="target-badge" id="targetBadge" hidden></span></h3><p>حالا می‌توانید وارد پنل شوید یا کانفیگ را در کلاینت اضافه کنید.</p></div></div>
         <div class="result-row"><span>لینک پنل</span><a id="panelLink" target="_blank" rel="noopener" dir="ltr"></a><button class="copy-btn" data-copy="panelLink">کپی</button></div>
         <div class="result-row"><span>سابسکریپشن</span><a id="subLink" target="_blank" rel="noopener" dir="ltr"></a><button class="copy-btn" data-copy="subLink">کپی</button></div>
         <div class="result-row"><span>مشخصات</span><a id="infoLink" target="_blank" rel="noopener" dir="ltr"></a><button class="copy-btn" data-copy="infoLink">کپی</button></div>
@@ -130,6 +130,6 @@
 
   <footer><b>MYX panel</b><span>•</span> One Token. One Click. Ready.</footer>
   <div class="toast" id="toast" hidden>کپی شد ✓</div>
-  <script src="app.js" defer></script>
+  <script src="app.js?v=3" defer></script>
 </body>
 </html>
