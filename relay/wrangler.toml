@@ -1,0 +1,7 @@
+name = "myx-deploy-relay"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+
+# فقط دامنه‌های مجاز برای استفاده از رله
+[vars]
+ALLOWED_ORIGINS = "https://mohammad-a12.github.io,http://localhost:8792,http://127.0.0.1:8792"
