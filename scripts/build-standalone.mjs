@@ -30,13 +30,10 @@ const bundle = `globalThis.__MYX_ASSETS__ = ${JSON.stringify(assets)};\n${worker
 await mkdir(outputDir, { recursive: true });
 await writeFile(path.join(outputDir, "myx-panel.js"), bundle, "utf8");
 
-// همان بسته برای رله ساخت خودکار استفاده می‌شود.
-await mkdir(path.join(root, "relay"), { recursive: true });
-await writeFile(
-  path.join(root, "relay", "worker-source.generated.js"),
-  `// فایل تولیدشده — با تغییر public دوباره scripts/build-standalone.mjs را اجرا کنید.\nexport const WORKER_SOURCE = ${JSON.stringify(bundle)};\n`,
-  "utf8"
-);
+// نسخه قابل انتشار در مخزن — رله ساخت خودکار همین فایل را از GitHub می‌خواند.
+const distDir = path.join(root, "dist");
+await mkdir(distDir, { recursive: true });
+await writeFile(path.join(distDir, "myx-panel.js"), bundle, "utf8");
 
 console.log(`Built .build/myx-panel.js (${Buffer.byteLength(bundle)} bytes)`);
-console.log("Built relay/worker-source.generated.js");
+console.log("Built dist/myx-panel.js");

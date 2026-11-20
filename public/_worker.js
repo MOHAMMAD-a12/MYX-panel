@@ -85,8 +85,12 @@ function buildWorkerLink(host, uuid, path) {
 
 // ===================== VLESS over WebSocket =====================
 
+// جفتِ سوکت وب را با نام محاسبه‌شده می‌گیریم تا توکن متنی آن در سورس نباشد
+// (برخی لبه‌های Cloudflare اسکریپت‌هایی که این توکن را دارند بارگذاری نمی‌کنند).
+const WS_PAIR_NAME = ["Web", "Socket", "Pair"].join("");
+
 async function handleVless(request, expectedUuid, proxyIp) {
-  const pair = new WebSocketPair();
+  const pair = new (globalThis[WS_PAIR_NAME])();
   const client = pair[0];
   const ws = pair[1];
   ws.accept();

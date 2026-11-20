@@ -1,8 +1,17 @@
 // MYX Deploy Relay — تنها وظیفه: ساخت خودکار پنل با توکن کاربر
 // هیچ توکنی ذخیره یا لاگ نمی‌شود؛ فقط به API رسمی Cloudflare ارسال می‌شود.
-import { WORKER_SOURCE } from "./worker-source.generated.js";
-
 const API = "https://api.cloudflare.com/client/v4";
+const REPO = "MOHAMMAD-a12/MYX-panel";
+const PANEL_SOURCES = [
+  `https://raw.githubusercontent.com/${REPO}/main/dist/myx-panel.js`,
+  `https://cdn.jsdelivr.net/gh/${REPO}@main/dist/myx-panel.js`,
+];
+
+// کش کوتاه در حافظهٔ ایزوله تا هر درخواست دوباره از GitHub نخواند
+let cachedSource = null;
+let cachedAt = 0;
+const CACHE_MS = 5 * 60 * 1000;
+
 const DEFAULT_ORIGINS = [
   "https://mohammad-a12.github.io",
   "http://localhost:8792",
@@ -10,6 +19,23 @@ const DEFAULT_ORIGINS = [
 ];
 
 class UserError extends Error {}
+
+async function loadPanelSource() {
+  if (cachedSource && Date.now() - cachedAt < CACHE_MS) return cachedSource;
+  for (const url of PANEL_SOURCES) {
+    try {
+      const response = await fetch(url, { headers: { "user-agent": "myx-deploy-relay" } });
+      if (!response.ok) continue;
+      const text = await response.text();
+      if (text.length > 1000 && text.includes("__MYX_ASSETS__") && text.includes("cloudflare:sockets")) {
+        cachedSource = text;
+        cachedAt = Date.now();
+        return text;
+      }
+    } catch {}
+  }
+  throw new UserError("منبع پنل در دسترس نیست. چند لحظه بعد دوباره تلاش کنید.");
+}
 
 export default {
   async fetch(request, env) {
@@ -95,11 +121,12 @@ async function deploy({ token, workerName }) {
     bindings: [{ type: "plain_text", name: "UUID", text: uuid }],
   };
 
+  const workerSource = await loadPanelSource();
   const form = new FormData();
   form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
   form.append(
     "myx-panel.js",
-    new Blob([WORKER_SOURCE], { type: "application/javascript+module" }),
+    new Blob([workerSource], { type: "application/javascript+module" }),
     "myx-panel.js"
   );
 
