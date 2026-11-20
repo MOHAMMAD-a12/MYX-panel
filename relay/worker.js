@@ -6,7 +6,6 @@ const PANEL_SOURCES = [
   `https://raw.githubusercontent.com/${REPO}/main/dist/myx-panel.js`,
   `https://cdn.jsdelivr.net/gh/${REPO}@main/dist/myx-panel.js`,
 ];
-
 // کش کوتاه در حافظهٔ ایزوله تا هر درخواست دوباره از GitHub نخواند
 let cachedSource = null;
 let cachedAt = 0;
@@ -160,43 +159,12 @@ async function deployWorker({ token, accountId, workerName, uuid }) {
 
 // ---- حالت Pages (pages.dev) ----
 async function deployPages({ token, accountId, workerName, uuid }) {
-  // ساخت پروژه در صورت نبود
-  const created = await fetch(`${API}/accounts/${accountId}/pages/projects`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "content-type": "application/json" },
-    body: JSON.stringify({
-      name: workerName,
-      production_branch: "main",
-      deployment_configs: {
-        production: {
-          compatibility_date: "2025-06-01",
-          env_vars: { UUID: { type: "plain_text", value: uuid } },
-        },
-      },
-    }),
-  }).then((r) => r.json());
+  const config = () => ({
+    compatibility_date: "2025-06-01",
+    env_vars: { UUID: { type: "plain_text", value: uuid } },
+  });
 
-  const code = created?.errors?.[0]?.code;
-  if (!created?.success && code !== 8000021) {
-    const message = created?.errors?.[0]?.message || "";
-    if (code === 8000009 || /already exists/i.test(message)) {
-      // پروژه از قبل هست — متغیر UUID را به‌روزرسانی می‌کنیم
-      await fetch(`${API}/accounts/${accountId}/pages/projects/${workerName}`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}`, "content-type": "application/json" },
-        body: JSON.stringify({
-          deployment_configs: {
-            production: {
-              compatibility_date: "2025-06-01",
-              env_vars: { UUID: { type: "plain_text", value: uuid } },
-            },
-          },
-        }),
-      }).catch(() => {});
-    } else {
-      throw new UserError(pagesError(code, message));
-    }
-  }
+  await ensurePagesProject({ token, accountId, workerName, config: config() });
 
   const workerSource = await loadPanelSource();
   const inner = new FormData();
@@ -234,12 +202,55 @@ async function deployPages({ token, accountId, workerName, uuid }) {
   };
 }
 
+async function ensurePagesProject({ token, accountId, workerName, config }) {
+  const headers = { Authorization: `Bearer ${token}`, "content-type": "application/json" };
+
+  const create = await fetch(`${API}/accounts/${accountId}/pages/projects`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ name: workerName, production_branch: "main", deployment_configs: { production: config } }),
+  }).then((r) => r.json());
+  if (create?.success) return;
+
+  const createErr = create?.errors?.[0] || {};
+  const createCode = createErr.code;
+  const createMsg = createErr.message || "";
+
+  // اگر پروژه از قبل هست، آن را پیدا و تنظیماتش را به‌روزرسانی می‌کنیم
+  const get = await fetch(`${API}/accounts/${accountId}/pages/projects/${workerName}`, { headers })
+    .then((r) => r.json());
+
+  if (get?.success) {
+    const existing = get.result?.deployment_configs?.production || {};
+    const merged = {
+      ...existing,
+      compatibility_date: existing.compatibility_date || config.compatibility_date,
+      env_vars: { ...(existing.env_vars || {}), ...(config.env_vars || {}) },
+    };
+    const patch = await fetch(`${API}/accounts/${accountId}/pages/projects/${workerName}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ deployment_configs: { production: merged } }),
+    }).then((r) => r.json());
+    if (patch?.success) return;
+    throw new UserError(pagesError(patch?.errors?.[0]?.code, patch?.errors?.[0]?.message));
+  }
+
+  if (createCode === 10000 || /authentication error|not entitled|unauthorized/i.test(createMsg)) {
+    throw new UserError(pagesError(createCode, createMsg));
+  }
+  throw new UserError(pagesError(createCode, createMsg) || createMsg || "ساخت پروژهٔ Pages ناموفق بود.");
+}
+
 function pagesError(code, message) {
   if (code === 8000119) {
     return "پروژهٔ Pages این اکانت توسط Cloudflare مسدود شده است. از حالت Worker + دامنهٔ اختصاصی استفاده کنید.";
   }
-  if (/not entitled|not allowed/i.test(message || "")) {
-    return "توکن اجازهٔ ساخت Pages را ندارد. دسترسی Pages: Edit را به توکن اضافه کنید.";
+  if (code === 10000 || /authentication error|not entitled|unauthorized/i.test(message || "")) {
+    return "توکن اجازهٔ Pages را ندارد. در صفحهٔ ساخت توکن، دسترسی Account → Cloudflare Pages → Edit را هم اضافه کنید (یا از حالت Worker استفاده کنید).";
+  }
+  if (/already exists/i.test(message || "")) {
+    return "";
   }
   return message || "ساخت پنل روی Pages ناموفق بود.";
 }

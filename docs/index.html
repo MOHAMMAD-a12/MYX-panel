@@ -69,8 +69,13 @@
 
         <div class="permissions-box">
           <div class="perm-head">توکن باید این دسترسی‌ها را داشته باشد:</div>
-          <div class="perm-list" dir="ltr">
+          <div class="perm-list" id="permWorker" dir="ltr">
             <span>Account · <b>Workers Scripts</b> · Edit</span>
+            <span>Account · <b>Account Settings</b> · Read</span>
+          </div>
+          <div class="perm-list" id="permPages" dir="ltr" hidden>
+            <span>Account · <b>Workers Scripts</b> · Edit</span>
+            <span>Account · <b>Cloudflare Pages</b> · Edit</span>
             <span>Account · <b>Account Settings</b> · Read</span>
           </div>
           <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener">ساخت توکن در Cloudflare ↗</a>

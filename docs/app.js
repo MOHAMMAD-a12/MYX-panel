@@ -36,6 +36,17 @@ nameInput.value = randomName();
   if (nameField && nameField.parentElement) nameField.after(box);
 })();
 
+// نمایش پویای دسترسی‌های لازم بر اساس محل استقرار انتخابی
+function syncPermissions() {
+  const isPages = document.querySelector('input[name="target"]:checked')?.value === "pages";
+  const w = document.getElementById("permWorker");
+  const p = document.getElementById("permPages");
+  if (w) w.hidden = isPages;
+  if (p) p.hidden = !isPages;
+}
+document.querySelectorAll('input[name="target"]').forEach((r) => r.addEventListener("change", syncPermissions));
+syncPermissions();
+
 $("toggleToken").addEventListener("click", () => {
   tokenInput.type = tokenInput.type === "password" ? "text" : "password";
   $("toggleToken").textContent = tokenInput.type === "password" ? "👁" : "🙈";
