@@ -19,6 +19,9 @@ const DEFAULT_ORIGINS = [
 
 class UserError extends Error {}
 
+// UUID پیش‌فرض داخل بستهٔ پنل؛ با UUID تصادفی هر استقرار جایگزین می‌شود
+const DEFAULT_UUID_TOKEN = "7c3d6f2a-9b41-4f5e-8a0c-2d91e6b4a735";
+
 async function loadPanelSource() {
   if (cachedSource && Date.now() - cachedAt < CACHE_MS) return cachedSource;
   for (const url of PANEL_SOURCES) {
@@ -34,6 +37,12 @@ async function loadPanelSource() {
     } catch {}
   }
   throw new UserError("منبع پنل در دسترس نیست. چند لحظه بعد دوباره تلاش کنید.");
+}
+
+// UUID تصادفی را داخل خود سورس می‌گذاریم؛ در Worker هم binding و در Pages هم بدون env کار می‌کند
+async function panelSourceFor(uuid) {
+  const raw = await loadPanelSource();
+  return raw.includes(DEFAULT_UUID_TOKEN) ? raw.replaceAll(DEFAULT_UUID_TOKEN, uuid) : raw;
 }
 
 export default {
@@ -127,7 +136,7 @@ async function deployWorker({ token, accountId, workerName, uuid }) {
     bindings: [{ type: "plain_text", name: "UUID", text: uuid }],
   };
 
-  const workerSource = await loadPanelSource();
+  const workerSource = await panelSourceFor(uuid);
   const form = new FormData();
   form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
   form.append(
@@ -159,14 +168,10 @@ async function deployWorker({ token, accountId, workerName, uuid }) {
 
 // ---- حالت Pages (pages.dev) ----
 async function deployPages({ token, accountId, workerName, uuid }) {
-  const config = () => ({
-    compatibility_date: "2025-06-01",
-    env_vars: { UUID: { type: "plain_text", value: uuid } },
-  });
+  // UUID داخل خود سورس جاسازی می‌شود، پس نیازی به تغییر env پروژه نیست
+  await ensurePagesProject({ token, accountId, workerName });
 
-  await ensurePagesProject({ token, accountId, workerName, config: config() });
-
-  const workerSource = await loadPanelSource();
+  const workerSource = await panelSourceFor(uuid);
   const inner = new FormData();
   inner.append(
     "metadata",
@@ -202,8 +207,9 @@ async function deployPages({ token, accountId, workerName, uuid }) {
   };
 }
 
-async function ensurePagesProject({ token, accountId, workerName, config }) {
+async function ensurePagesProject({ token, accountId, workerName }) {
   const headers = { Authorization: `Bearer ${token}`, "content-type": "application/json" };
+  const prodConfig = { compatibility_date: "2025-06-01", fail_open: false };
 
   const create = await fetch(`${API}/accounts/${accountId}/pages/projects`, {
     method: "POST",
@@ -211,7 +217,7 @@ async function ensurePagesProject({ token, accountId, workerName, config }) {
     body: JSON.stringify({
       name: workerName,
       production_branch: "main",
-      deployment_configs: { production: config, preview: { fail_open: false } },
+      deployment_configs: { production: prodConfig, preview: { fail_open: false } },
     }),
   }).then((r) => r.json());
   if (create?.success) return;
@@ -220,27 +226,29 @@ async function ensurePagesProject({ token, accountId, workerName, config }) {
   const createCode = createErr.code;
   const createMsg = createErr.message || "";
 
-  // اگر پروژه از قبل هست، آن را پیدا و تنظیماتش را به‌روزرسانی می‌کنیم
+  // اگر پروژه از قبل هست فقط مطمئن می‌شویم compatibility_date ست شده باشد
+  // (UUID دیگر به env وابسته نیست، پس نیازی به تغییر دیگر تنظیمات نیست)
   const get = await fetch(`${API}/accounts/${accountId}/pages/projects/${workerName}`, { headers })
     .then((r) => r.json());
 
   if (get?.success) {
     const configs = get.result?.deployment_configs || {};
     const prod = { ...(configs.production || {}) };
-    const prev = { ...(configs.preview || {}) };
-    // Cloudflare می‌خواهد fail_open در هر دو محیط یکسان باشد
-    prod.compatibility_date = prod.compatibility_date || config.compatibility_date;
-    prod.env_vars = { ...(prod.env_vars || {}), ...(config.env_vars || {}) };
-    if (prod.fail_open === undefined) prod.fail_open = false;
-    if (prev.fail_open === undefined) prev.fail_open = prod.fail_open;
-
-    const patch = await fetch(`${API}/accounts/${accountId}/pages/projects/${workerName}`, {
-      method: "PATCH",
-      headers,
-      body: JSON.stringify({ deployment_configs: { production: prod, preview: prev } }),
-    }).then((r) => r.json());
-    if (patch?.success) return;
-    throw new UserError(pagesError(patch?.errors?.[0]?.code, patch?.errors?.[0]?.message));
+    if (!prod.compatibility_date) {
+      const prev = { ...(configs.preview || {}) };
+      // Cloudflare می‌خواهد fail_open در هر دو محیط یکسان باشد؛ هر دو را برابر می‌کنیم
+      const failOpen = prod.fail_open ?? prev.fail_open ?? false;
+      prod.fail_open = failOpen;
+      prev.fail_open = failOpen;
+      prod.compatibility_date = "2025-06-01";
+      // تلاش برای به‌روزرسانی؛ اگر ناموفق بود ادامه می‌دهیم چون مسیر استقرار به آن وابسته نیست
+      await fetch(`${API}/accounts/${accountId}/pages/projects/${workerName}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ deployment_configs: { production: prod, preview: prev } }),
+      }).catch(() => {});
+    }
+    return;
   }
 
   if (createCode === 10000 || /authentication error|not entitled|unauthorized/i.test(createMsg)) {
