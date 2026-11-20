@@ -170,6 +170,18 @@
                 </select>
               </label>
             </div>
+
+            <div class="ech-box">
+              <label class="ech-toggle">
+                <input id="ech" type="checkbox" />
+                <span>🛡 <b>ECH</b> — رمزگذاری SNI برای عبور از فیلترینگ <small>(برای workers.dev ضروری است)</small></span>
+              </label>
+              <label class="ech-value">
+                <span>منبع ECH Config</span>
+                <input id="echValue" type="text" dir="ltr" placeholder="https://1.1.1.1/dns-query" />
+              </label>
+              <p class="ech-hint">کلاینت با کوئری DNS، رکورد HTTPS هدف را می‌خواند و SNI واقعی را رمزگذاری می‌کند. Xray نسخهٔ جدید لازم است.</p>
+            </div>
           </div>
 
           <div class="grid" id="realityFields" hidden>

@@ -6,9 +6,11 @@
 //   /vless (پیش‌فرض) → ارتقای WebSocket و اجرای پروتکل VLESS
 //
 // متغیرهای محیطی (Dashboard → Settings → Variables):
-//   UUID    شناسه اتصال (پیش‌نهاد: مقدار تصادفی خودتان)
-//   PATH    مسیر WebSocket، پیش‌فرض /vless
-//   PROXYIP اختیاری: IP:port برای اتصال به مقصدهایی که خود Cloudflare هستند
+//   UUID        شناسه اتصال (پیش‌نهاد: مقدار تصادفی خودتان)
+//   PATH        مسیر WebSocket، پیش‌فرض /vless
+//   PROXYIP     اختیاری: IP:port برای اتصال به مقصدهایی که خود Cloudflare هستند
+//   ECH         1 (پیش‌فرض): لینک /sub پارامتر ech دارد؛ 0: خاموش؛ auto: فقط روی workers.dev
+//   ECH_SOURCE  منبع ECH Config، پیش‌فرض https://1.1.1.1/dns-query
 
 import { connect } from "cloudflare:sockets";
 
@@ -22,11 +24,11 @@ export default {
     const wsPath = normalizePath(env.PATH || "/vless");
 
     if (url.pathname === "/info") {
-      return jsonResponse({ uuid, path: wsPath, host });
+      return jsonResponse({ uuid, path: wsPath, host, ech: echEnabled(env, host) });
     }
 
     if (url.pathname === "/sub") {
-      const link = buildWorkerLink(host, uuid, wsPath);
+      const link = buildWorkerLink(host, uuid, wsPath, env);
       const body = btoa(String.fromCharCode(...new TextEncoder().encode(link + "\n")));
       return new Response(body, {
         headers: {
@@ -70,7 +72,7 @@ function jsonResponse(obj) {
   });
 }
 
-function buildWorkerLink(host, uuid, path) {
+function buildWorkerLink(host, uuid, path, env) {
   const q = new URLSearchParams({
     encryption: "none",
     security: "tls",
@@ -80,7 +82,25 @@ function buildWorkerLink(host, uuid, path) {
     host,
     path,
   });
+  // ECH: SNI را رمزگذاری می‌کند تا فیلترینگِ workers.dev دور زده شود
+  if (echEnabled(env, host)) {
+    q.set("ech", echSource(env, host));
+  }
   return `vless://${uuid}@${host}:443?${q.toString()}#CF-Worker`;
+}
+
+// ECH به‌طور پیش‌فرض روی workers.dev روشن است (آنجا SNI فیلتر می‌شود)؛ با ECH=0 خاموش می‌شود
+const DEFAULT_ECH_SOURCE = "https://1.1.1.1/dns-query";
+
+function echEnabled(env, host) {
+  const flag = String(env.ECH ?? "1").toLowerCase();
+  if (["0", "false", "off", "no"].includes(flag)) return false;
+  if (["1", "true", "on", "always", "yes"].includes(flag)) return true;
+  return /\.workers\.dev$/i.test(host || "");
+}
+
+function echSource(env, host) {
+  return String(env.ECH_SOURCE || DEFAULT_ECH_SOURCE);
 }
 
 // ===================== VLESS over WebSocket =====================

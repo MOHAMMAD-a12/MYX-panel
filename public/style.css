@@ -258,3 +258,16 @@ footer span { color: #454e69; }
   .import-box { flex-direction: column; }
   .tab { font-size: .75rem; padding: 10px 4px; }
 }
+
+/* ===== ECH ===== */
+.ech-box { display: none; grid-column: 1 / -1; margin-top: 4px; padding: 11px 12px; border-radius: 13px;
+  background: rgba(69, 223, 170, .06); border: 1px solid rgba(69, 223, 170, .2); }
+.ech-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: .78rem; }
+.ech-toggle input { width: 17px; height: 17px; accent-color: #45dfaa; cursor: pointer; }
+.ech-toggle small { color: #7e8baa; }
+.ech-value { display: grid; gap: 6px; margin-top: 9px; }
+.ech-value span { font-size: .72rem; color: #8a96b7; }
+.ech-value input { background: var(--panel-2, #0a0f20); border: 1px solid rgba(164,177,232,.18); color: #f0f3ff;
+  border-radius: 10px; padding: 9px 11px; font: 12px Consolas, monospace; outline: none; direction: ltr; }
+.ech-value input:focus { border-color: #45dfaa; }
+.ech-hint { margin: 8px 0 0; font-size: .68rem; line-height: 1.8; color: #6f7a99; }

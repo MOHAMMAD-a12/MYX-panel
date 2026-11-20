@@ -8,6 +8,8 @@ const fields = [
   "pbk", "sid", "spx", "dest", "host", "path", "serviceName", "mux",
 ];
 
+const DEFAULT_ECH_SOURCE = "https://1.1.1.1/dns-query";
+
 // قالب‌های آماده — با یک کلیک همه تنظیمات فنی پر می‌شود
 const PRESETS = {
   "vless-reality": {
@@ -67,6 +69,7 @@ function buildStreamSettings(v) {
     if (v.alpn) tls.alpn = v.alpn.split(",");
     if (v.fingerprint) tls.fingerprint = v.fingerprint;
     if (v.allowInsecure === "true") tls.allowInsecure = true;
+    if (v.ech === true && v.echValue) tls.echConfigList = v.echValue;
     ss.tlsSettings = tls;
   } else if (v.security === "reality") {
     ss.security = "reality";
@@ -148,8 +151,7 @@ function buildXrayJson(v) {
 }
 
 // ============ لینک اشتراک ============
-function buildShareLink(v) {
-  const remark = encodeURIComponent(v.remark || "config");
+function buildShareLink(v) {  const remark = encodeURIComponent(v.remark || "config");
   const p = new URLSearchParams();
 
   if (v.protocol === "vless") {
@@ -164,6 +166,7 @@ function buildShareLink(v) {
     if (v.security === "tls") {
       if (v.alpn) p.set("alpn", v.alpn);
       if (v.allowInsecure === "true") p.set("allowInsecure", "1");
+      if (v.ech === true && v.echValue) p.set("ech", v.echValue);
     }
     if (v.security === "reality") {
       if (v.pbk) p.set("pbk", v.pbk);
@@ -273,6 +276,10 @@ function render() {
   $("tlsTitle").textContent = isReality ? "تنظیمات REALITY" : "تنظیمات TLS";
   $("realityFields").hidden = !isReality;
 
+  // ECH فقط برای TLS معنا دارد
+  const isTls = v.security === "tls";
+  document.querySelectorAll(".ech-box, .ech-value").forEach((el) => (el.style.display = isTls ? "" : "none"));
+
   const wsLike = ["ws", "httpupgrade", "tcp"].includes(v.network);
   document.querySelectorAll(".wsField").forEach((el) => (el.hidden = !wsLike));
   document.querySelectorAll(".grpcField").forEach((el) => (el.hidden = v.network !== "grpc"));
@@ -358,6 +365,11 @@ function importLink() {
       setField("alpn", q.get("alpn") || "");
       if (q.get("fp")) setField("fingerprint", q.get("fp"));
       setField("allowInsecure", q.get("allowInsecure") === "1" ? "true" : "false");
+      const echParam = q.get("ech");
+      if (echParam) {
+        $("ech").checked = true;
+        setField("echValue", echParam);
+      }
     } else {
       throw new Error("bad protocol");
     }
@@ -443,6 +455,12 @@ function applyWorkerConfig() {
   setField("path", info.path);
   setField("remark", "CF-Worker");
   if (info.uuid) setField("uuid", info.uuid);
+
+  // روی workers.dev، فیلترینگ SNI جلوی اتصال را می‌گیرد؛ ECH آن را حل می‌کند
+  const onWorkersDev = /\.workers\.dev$/i.test(info.host);
+  $("ech").checked = !!onWorkersDev || info.ech === true;
+  setField("echValue", info.echSource || DEFAULT_ECH_SOURCE);
+
   render();
   toast("کانفیگ همین ورکر ساخته شد ☁️✔");
 }
@@ -451,6 +469,8 @@ $("workerPreset").addEventListener("click", applyWorkerConfig);
 
 // ============ رویدادها ============
 fields.forEach((f) => $(f).addEventListener("input", render));
+$("ech").addEventListener("change", render);
+$("echValue").addEventListener("input", render);
 
 document.querySelectorAll(".preset").forEach((btn) => {
   btn.addEventListener("click", () => {
