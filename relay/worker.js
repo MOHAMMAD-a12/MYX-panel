@@ -74,16 +74,17 @@ export default {
 
     const token = typeof body?.token === "string" ? body.token.trim() : "";
     const workerName = String(body?.workerName || "").trim().toLowerCase();
+    const target = body?.target === "pages" ? "pages" : "worker";
 
     if (token.length < 20 || token.length > 200) {
       return json({ error: "توکن Cloudflare معتبر نیست." }, 400, cors);
     }
     if (!/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(workerName)) {
-      return json({ error: "نام Worker باید با حروف کوچک انگلیسی، عدد یا خط تیره باشد." }, 400, cors);
+      return json({ error: "نام باید با حروف کوچک انگلیسی، عدد یا خط تیره باشد." }, 400, cors);
     }
 
     try {
-      const result = await deploy({ token, workerName });
+      const result = await deploy({ token, workerName, target });
       return json(result, 200, cors);
     } catch (error) {
       const message = error instanceof UserError
@@ -94,13 +95,20 @@ export default {
   },
 };
 
-async function deploy({ token, workerName }) {
+async function deploy({ token, workerName, target }) {
   const accounts = await cf(token, "/accounts");
   if (!Array.isArray(accounts) || !accounts.length) {
     throw new UserError("هیچ اکانتی با این توکن پیدا نشد. توکن را با دسترسی Account Settings Read بسازید.");
   }
   const accountId = accounts[0].id;
+  const uuid = crypto.randomUUID();
 
+  if (target === "pages") return deployPages({ token, accountId, workerName, uuid });
+  return deployWorker({ token, accountId, workerName, uuid });
+}
+
+// ---- حالت Worker (workers.dev) ----
+async function deployWorker({ token, accountId, workerName, uuid }) {
   let subdomain = await cf(token, `/accounts/${accountId}/workers/subdomain`)
     .then((r) => r?.subdomain || "")
     .catch(() => "");
@@ -114,7 +122,6 @@ async function deploy({ token, workerName }) {
     subdomain = created?.subdomain || subdomain;
   }
 
-  const uuid = crypto.randomUUID();
   const metadata = {
     main_module: "myx-panel.js",
     compatibility_date: "2025-06-01",
@@ -138,14 +145,103 @@ async function deploy({ token, workerName }) {
   await cf(token, `/accounts/${accountId}/workers/scripts/${workerName}/subdomain`, {
     method: "POST",
     body: JSON.stringify({ enabled: true }),
-  });
+  }).catch(() => {});
 
   const panelUrl = `https://${workerName}.${subdomain}.workers.dev`;
   return {
     panelUrl,
     subUrl: panelUrl + "/sub",
+    infoUrl: panelUrl + "/info",
     workerName,
+    target: "worker",
+    uuid,
   };
+}
+
+// ---- حالت Pages (pages.dev) ----
+async function deployPages({ token, accountId, workerName, uuid }) {
+  // ساخت پروژه در صورت نبود
+  const created = await fetch(`${API}/accounts/${accountId}/pages/projects`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "content-type": "application/json" },
+    body: JSON.stringify({
+      name: workerName,
+      production_branch: "main",
+      deployment_configs: {
+        production: {
+          compatibility_date: "2025-06-01",
+          env_vars: { UUID: { type: "plain_text", value: uuid } },
+        },
+      },
+    }),
+  }).then((r) => r.json());
+
+  const code = created?.errors?.[0]?.code;
+  if (!created?.success && code !== 8000021) {
+    const message = created?.errors?.[0]?.message || "";
+    if (code === 8000009 || /already exists/i.test(message)) {
+      // پروژه از قبل هست — متغیر UUID را به‌روزرسانی می‌کنیم
+      await fetch(`${API}/accounts/${accountId}/pages/projects/${workerName}`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          deployment_configs: {
+            production: {
+              compatibility_date: "2025-06-01",
+              env_vars: { UUID: { type: "plain_text", value: uuid } },
+            },
+          },
+        }),
+      }).catch(() => {});
+    } else {
+      throw new UserError(pagesError(code, message));
+    }
+  }
+
+  const workerSource = await loadPanelSource();
+  const inner = new FormData();
+  inner.append(
+    "metadata",
+    JSON.stringify({ main_module: "_worker.js", compatibility_date: "2025-06-01", compatibility_flags: [] })
+  );
+  inner.append("_worker.js", new Blob([workerSource], { type: "application/javascript+module" }), "_worker.js");
+  const bundle = await new Response(inner).blob();
+
+  const form = new FormData();
+  form.append("manifest", JSON.stringify({}));
+  form.append("branch", "main");
+  form.append("_worker.bundle", bundle, "_worker.bundle");
+
+  const deployment = await fetch(`${API}/accounts/${accountId}/pages/projects/${workerName}/deployments`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  }).then((r) => r.json());
+
+  if (!deployment?.success) {
+    throw new UserError(pagesError(deployment?.errors?.[0]?.code, deployment?.errors?.[0]?.message));
+  }
+
+  const panelUrl = `https://${workerName}.pages.dev`;
+  return {
+    panelUrl,
+    subUrl: panelUrl + "/sub",
+    infoUrl: panelUrl + "/info",
+    workerName,
+    target: "pages",
+    uuid,
+    note: "اگر آدرس pages.dev باز نشد، یک دامنهٔ اختصاصی به پروژه وصل کنید.",
+  };
+}
+
+function pagesError(code, message) {
+  if (code === 8000119) {
+    return "پروژهٔ Pages این اکانت توسط Cloudflare مسدود شده است. از حالت Worker + دامنهٔ اختصاصی استفاده کنید.";
+  }
+  if (/not entitled|not allowed/i.test(message || "")) {
+    return "توکن اجازهٔ ساخت Pages را ندارد. دسترسی Pages: Edit را به توکن اضافه کنید.";
+  }
+  return message || "ساخت پنل روی Pages ناموفق بود.";
 }
 
 async function cf(token, path, init = {}) {

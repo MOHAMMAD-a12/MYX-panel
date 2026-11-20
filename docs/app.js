@@ -55,7 +55,11 @@ form.addEventListener("submit", async (event) => {
     const response = await fetch(RELAY_URL + "/deploy", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ token, workerName }),
+      body: JSON.stringify({
+        token,
+        workerName,
+        target: document.querySelector('input[name="target"]:checked')?.value || "worker",
+      }),
     });
 
     let data;
@@ -73,7 +77,19 @@ form.addEventListener("submit", async (event) => {
     $("panelLink").href = data.panelUrl;
     $("subLink").textContent = data.subUrl;
     $("subLink").href = data.subUrl;
+    $("infoLink").textContent = data.infoUrl || data.panelUrl + "/info";
+    $("infoLink").href = data.infoUrl || data.panelUrl + "/info";
     $("openPanel").href = data.panelUrl;
+    const note = $("targetNote");
+    if (data.note) {
+      note.textContent = "💡 " + data.note;
+      note.hidden = false;
+    } else if (!data.target || data.target === "worker") {
+      note.textContent = "💡 اگر این آدرس Error 1101 داد، workers.dev این اکانت قطع است؛ یک دامنهٔ اختصاصی وصل کنید یا با گزینهٔ Pages دوباره بسازید.";
+      note.hidden = false;
+    } else {
+      note.hidden = true;
+    }
     resultBox.hidden = false;
     tokenInput.value = "";
     resultBox.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -89,6 +105,7 @@ form.addEventListener("submit", async (event) => {
 $("againBtn").addEventListener("click", () => {
   nameInput.value = randomName();
   resultBox.hidden = true;
+  $("targetNote").hidden = true;
   tokenInput.focus();
 });
 

@@ -41,4 +41,13 @@
 .faq a{color:#b9a5ff}
 .toast{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);background:rgba(16,29,40,.97);border:1px solid rgba(69,223,170,.35);color:#adf1d8;padding:10px 20px;border-radius:12px;font-size:.8rem;z-index:10;box-shadow:0 15px 40px rgba(0,0,0,.4)}
 @keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-@media(max-width:620px){.deploy-card{padding:19px;border-radius:20px}.card-top{flex-direction:column;gap:10px}.result-row{grid-template-columns:1fr auto}.result-row>span{grid-column:1/-1}.deploy-btn{font-size:.9rem}}@media(max-width:620px){.hero{padding:45px 0 65px}.hero h1{font-size:2.5rem}.step-card{padding:18px;gap:13px}.step-icon{flex-basis:40px;width:40px;height:40px}.step-head{align-items:flex-start;flex-direction:column;gap:6px}.step-head h3{font-size:1rem}.permission{gap:7px;font-size:.68rem;padding:9px}.auto-list{gap:7px}.result-card{padding:20px}.brand>span:last-child{font-size:1rem}.checks{gap:9px}}
+@media(max-width:620px){.deploy-card{padding:19px;border-radius:20px}.card-top{flex-direction:column;gap:10px}.result-row{grid-template-columns:1fr auto}.result-row>span{grid-column:1/-1}.deploy-btn{font-size:.9rem}}
+/* ===== انتخاب محل استقرار ===== */
+.target-picker{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.target-option input{position:absolute;opacity:0;pointer-events:none}
+.target-box{display:block;border:1px solid rgba(164,177,232,.18);background:rgba(5,10,20,.45);border-radius:13px;padding:11px 12px;cursor:pointer;transition:.15s}
+.target-box b{display:block;font-size:.82rem;margin-bottom:3px}
+.target-box small{color:#7e8baa;font-size:.66rem}
+.target-box code{font:10px Consolas,monospace;color:#9fc4ff;direction:ltr}
+.target-option input:checked+.target-box{border-color:#a68bfa;background:rgba(166,139,250,.1);box-shadow:0 0 0 3px rgba(166,139,250,.12)}
+.result-note{margin:12px 0 0;color:#ffd28a;font-size:.72rem;line-height:1.9;background:rgba(255,203,112,.07);border:1px solid rgba(255,203,112,.2);border-radius:11px;padding:10px 12px}@media(max-width:620px){.hero{padding:45px 0 65px}.hero h1{font-size:2.5rem}.step-card{padding:18px;gap:13px}.step-icon{flex-basis:40px;width:40px;height:40px}.step-head{align-items:flex-start;flex-direction:column;gap:6px}.step-head h3{font-size:1rem}.permission{gap:7px;font-size:.68rem;padding:9px}.auto-list{gap:7px}.result-card{padding:20px}.brand>span:last-child{font-size:1rem}.checks{gap:9px}}

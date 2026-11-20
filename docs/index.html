@@ -43,9 +43,29 @@
         </label>
 
         <label class="field">
-          <span>نام Worker <small>(اختیاری — پیشنهاد خودکار)</small></span>
+          <span>نام <small>(اختیاری — پیشنهاد خودکار)</small></span>
           <input id="workerName" type="text" dir="ltr" pattern="[a-z0-9-]+" maxlength="63" />
         </label>
+
+        <div class="field">
+          <span>محل استقرار <small>(اگر workers.dev باز نشد، Pages را انتخاب کنید)</small></span>
+          <div class="target-picker" role="radiogroup">
+            <label class="target-option">
+              <input type="radio" name="target" value="worker" checked />
+              <span class="target-box">
+                <b>☁️ Worker</b>
+                <small>دامنه: <code>name.workers.dev</code></small>
+              </span>
+            </label>
+            <label class="target-option">
+              <input type="radio" name="target" value="pages" />
+              <span class="target-box">
+                <b>📄 Pages</b>
+                <small>دامنه: <code>name.pages.dev</code></small>
+              </span>
+            </label>
+          </div>
+        </div>
 
         <div class="permissions-box">
           <div class="perm-head">توکن باید این دسترسی‌ها را داشته باشد:</div>
@@ -70,6 +90,8 @@
         <div class="success-head"><span>✓</span><div><h3>پنل شما آماده است!</h3><p>حالا می‌توانید وارد پنل شوید یا کانفیگ را در کلاینت اضافه کنید.</p></div></div>
         <div class="result-row"><span>لینک پنل</span><a id="panelLink" target="_blank" rel="noopener" dir="ltr"></a><button class="copy-btn" data-copy="panelLink">کپی</button></div>
         <div class="result-row"><span>سابسکریپشن</span><a id="subLink" target="_blank" rel="noopener" dir="ltr"></a><button class="copy-btn" data-copy="subLink">کپی</button></div>
+        <div class="result-row"><span>مشخصات</span><a id="infoLink" target="_blank" rel="noopener" dir="ltr"></a><button class="copy-btn" data-copy="infoLink">کپی</button></div>
+        <p class="result-note" id="targetNote" hidden></p>
         <div class="result-actions">
           <a class="open-panel" id="openPanel" target="_blank" rel="noopener">🚀 باز کردن پنل</a>
           <button class="again-btn" id="againBtn" type="button">ساخت پنل جدید</button>
@@ -90,6 +112,10 @@
       <details>
         <summary>دسترسی توکن را چطور محدود کنم؟</summary>
         <p>در صفحه API Tokens، گزینه Create Custom Token را انتخاب کنید و فقط دو دسترسی <b>Workers Scripts: Edit</b> و <b>Account Settings: Read</b> را برای همان اکانت بدهید. بعد از ساخت پنل، توکن را Delete کنید.</p>
+      </details>
+      <details>
+        <summary>اگر پنل با Error 1101 باز نشد چه کنم؟</summary>
+        <p>روی بعضی اکانت‌ها دامنهٔ <b>workers.dev</b> از سمت Cloudflare مسدود یا قطع است و هیچ کدی این را درست نمی‌کند. دو راه‌حل: ۱) در داشبورد به <b>Workers &amp; Pages → نام Worker → Settings → Domains &amp; Routes</b> بروید و یک دامنهٔ اختصاصی وصل کنید، یا ۲) در همین فرم گزینهٔ <b>Pages</b> را انتخاب کنید.</p>
       </details>
       <details>
         <summary>اگر ساخت ناموفق بود چه کنم؟</summary>

@@ -44,10 +44,10 @@ export default {
       return handleVless(request, uuid, env.PROXYIP || "");
     }
 
-    // بقیه مسیرها → فایل‌های استاتیک پنل (Pages/Assets یا نسخه یک‌فایلی Wizard)
-    if (env.ASSETS) return env.ASSETS.fetch(request);
+    // بقیه مسیرها → فایل‌های استاتیک پنل (اول بستهٔ جاسازی‌شده، بعد Assets صفحه‌ای)
     const embedded = serveEmbeddedAsset(url.pathname);
     if (embedded) return embedded;
+    if (env.ASSETS) return env.ASSETS.fetch(request);
     return new Response("Not found", { status: 404 });
   },
 };
