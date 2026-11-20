@@ -1,3 +1,4 @@
 .wrangler/
 .cf-test/
+.build/
 node_modules/

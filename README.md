@@ -14,6 +14,23 @@
 
 ---
 
+## نصب خودکار با یک API Token (GitHub Actions + Pages)
+
+صفحه راهنمای نصب:
+```text
+https://mohammad-a12.github.io/MYX-panel/
+```
+
+فقط یک Secret لازم است:
+
+1. در Cloudflare یک **Custom API Token** با دسترسی `Account → Workers Scripts → Edit` بسازید.
+2. در GitHub در مسیر **Settings → Secrets and variables → Actions** یک Secret با نام `CLOUDFLARE_API_TOKEN` بسازید.
+3. از تب **Actions → Deploy MYX panel to Cloudflare → Run workflow** اجرا کنید.
+
+Action به‌صورت خودکار اکانت را تشخیص می‌دهد، UUID تصادفی می‌سازد، Worker تک‌فایلی را Deploy می‌کند، `workers.dev` را فعال می‌کند و لینک پنل و سابسکریپشن را در Summary نشان می‌دهد. نیازی به وارد کردن Account ID نیست.
+
+---
+
 ## استقرار روی Cloudflare Pages (ساده‌ترین روش)
 
 ### روش مستقیم (بدون Git)

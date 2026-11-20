@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="نصب خودکار MYX panel روی Cloudflare فقط با یک API Token" />
+  <title>MYX Auto Deploy — نصب خودکار پنل</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav>
+    <a class="brand" href="./"><span class="brand-mark">M</span><span>MYX <b>auto deploy</b></span></a>
+    <a class="repo-link" href="https://github.com/MOHAMMAD-a12/MYX-panel" target="_blank" rel="noopener">GitHub ↗</a>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <div class="eyebrow"><i></i> راه‌اندازی سریع و امن روی Cloudflare</div>
+      <h1>فقط یک توکن.<br/><em>پنل شما آماده است.</em></h1>
+      <p>بدون Account ID، بدون نصب برنامه و بدون کار با ترمینال.<br/>GitHub همه مراحل ساخت، Deploy و فعال‌سازی <bdi>workers.dev</bdi> را خودکار انجام می‌دهد.</p>
+      <a class="primary" href="#setup">شروع راه‌اندازی <span>↓</span></a>
+      <div class="checks"><span>✓ تشخیص خودکار اکانت</span><span>✓ UUID تصادفی</span><span>✓ سابسکریپشن آماده</span></div>
+    </section>
+
+    <section class="setup" id="setup">
+      <div class="section-heading"><span>راه‌اندازی در ۳ مرحله</span><h2>کمتر از دو دقیقه تا پنل خودتان</h2></div>
+
+      <article class="step-card">
+        <div class="step-icon purple">01</div>
+        <div class="step-content">
+          <div class="step-head"><h3>توکن کلودفلر بسازید</h3><span class="time">۳۰ ثانیه</span></div>
+          <p>در Cloudflare یک <b>Custom Token</b> بسازید و فقط این دسترسی را بدهید:</p>
+          <div class="permission" dir="ltr"><span>Account</span><b>Workers Scripts</b><span>Edit</span></div>
+          <p class="small">نام توکن دلخواه است. نیازی به Global API Key نیست.</p>
+          <a class="step-button" href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener">ساخت API Token در Cloudflare ↗</a>
+        </div>
+      </article>
+
+      <article class="step-card">
+        <div class="step-icon blue">02</div>
+        <div class="step-content">
+          <div class="step-head"><h3>توکن را در GitHub Secret قرار دهید</h3><span class="time">۳۰ ثانیه</span></div>
+          <p>دکمه زیر را بزنید، یک Secret جدید بسازید و مشخصات را وارد کنید:</p>
+          <div class="secret-row"><span>Name</span><code dir="ltr">CLOUDFLARE_API_TOKEN</code></div>
+          <div class="secret-row"><span>Secret</span><code>توکنی که در مرحله قبل ساختید</code></div>
+          <a class="step-button" href="https://github.com/MOHAMMAD-a12/MYX-panel/settings/secrets/actions/new" target="_blank" rel="noopener">افزودن Secret به GitHub ↗</a>
+        </div>
+      </article>
+
+      <article class="step-card featured">
+        <div class="step-icon cyan">03</div>
+        <div class="step-content">
+          <div class="step-head"><h3>Deploy خودکار را اجرا کنید</h3><span class="time">۱ دقیقه</span></div>
+          <p>در صفحه Actions، روی <b>Run workflow</b> و سپس دکمه سبز <b>Run workflow</b> بزنید. نام <bdi>myx-panel</bdi> را می‌توانید تغییر دهید.</p>
+          <div class="auto-list">
+            <span>✓ ساخت Worker تک‌فایلی</span><span>✓ تولید UUID امن</span><span>✓ فعال‌سازی لینک پنل</span>
+          </div>
+          <a class="step-button run" href="https://github.com/MOHAMMAD-a12/MYX-panel/actions/workflows/deploy-cloudflare.yml" target="_blank" rel="noopener">🚀 اجرای MYX Auto Deploy ↗</a>
+          <p class="small success-note">بعد از تیک سبز شدن Action، روی مرحله Deploy کلیک کنید؛ لینک پنل و سابسکریپشن در Summary نمایش داده می‌شود.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="result-card">
+      <div class="result-symbol">✓</div>
+      <div><h2>بعد از Deploy چه چیزی می‌گیرید؟</h2><p>یک پنل اختصاصی <bdi>MYX panel</bdi> با کانفیگ واقعی VLESS، QR Code و سابسکریپشن خودکار روی شبکه Cloudflare.</p></div>
+      <div class="result-links" dir="ltr"><span>https://myx-panel.&lt;account&gt;.workers.dev</span><span>.../sub &nbsp; ← Subscription</span></div>
+    </section>
+
+    <section class="faq">
+      <details><summary>توکن من کجا نگهداری می‌شود؟</summary><p>توکن فقط در GitHub Secrets قرار می‌گیرد و هنگام اجرای Action مستقیماً به API رسمی Cloudflare فرستاده می‌شود. این صفحه هیچ فیلد دریافت توکنی ندارد و هیچ داده‌ای ذخیره یا رد‌وبدل نمی‌کند.</p></details>
+      <details><summary>چرا توکن را داخل همین صفحه وارد نمی‌کنم؟</summary><p>GitHub Pages کاملاً استاتیک است و API کلودفلر اجازه چنین فراخوانی مستقیمی از مرورگر (CORS) نمی‌دهد. استفاده از CORS Proxy عمومی هم امن نیست، چون صاحب Proxy به توکن دسترسی پیدا می‌کند. GitHub Actions روش امن و رسمی برای این اتوماسیون است.</p></details>
+      <details><summary>برای نصب مجدد یا تغییر نام پنل چه کنم؟</summary><p>دوباره همان Action را اجرا کنید. اگر نام Worker را تغییر دهید، یک پنل جدید با UUID تازه ساخته می‌شود؛ اگر نام قبلی را نگه دارید، همان Worker به‌روزرسانی می‌شود.</p></details>
+    </section>
+  </main>
+
+  <footer><b>MYX panel</b><span>•</span> Open Source & Secure Automation</footer>
+</body>
+</html>

@@ -43,11 +43,21 @@ export default {
       return handleVless(request, uuid, env.PROXYIP || "");
     }
 
-    // بقیه مسیرها → فایل‌های استاتیک پنل
+    // بقیه مسیرها → فایل‌های استاتیک پنل (Pages/Assets یا نسخه یک‌فایلی Wizard)
     if (env.ASSETS) return env.ASSETS.fetch(request);
-    return new Response("Panel assets are available on Cloudflare Pages. Enable ASSETS for Workers.", { status: 200 });
+    const embedded = serveEmbeddedAsset(url.pathname);
+    if (embedded) return embedded;
+    return new Response("Not found", { status: 404 });
   },
 };
+
+function serveEmbeddedAsset(pathname) {
+  const assets = globalThis.__MYX_ASSETS__;
+  if (!assets) return null;
+  const asset = assets[pathname] || (pathname === "/index.html" ? assets["/"] : null);
+  if (!asset) return null;
+  return new Response(asset.body, { headers: { "content-type": asset.type } });
+}
 
 function normalizePath(p) {
   if (!p.startsWith("/")) p = "/" + p;

@@ -1,0 +1,35 @@
+name: 🚀 Deploy MYX panel to Cloudflare
+
+on:
+  workflow_dispatch:
+    inputs:
+      worker_name:
+        description: "نام Worker (حروف کوچک انگلیسی و خط تیره)"
+        required: true
+        default: "myx-panel"
+        type: string
+
+concurrency:
+  group: myx-cloudflare-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy MYX panel
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Download MYX panel source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Deploy automatically with Cloudflare API token
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WORKER_NAME: ${{ inputs.worker_name }}
+        run: bash scripts/deploy-cloudflare.sh
