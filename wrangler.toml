@@ -1,0 +1,13 @@
+name = "myx-panel"
+main = "public/_worker.js"
+compatibility_date = "2025-06-01"
+
+# برای Workers: همان فایل‌های پنل به‌صورت Assets سرو می‌شوند و _worker.js مسیر /vless و /sub را اجرا می‌کند.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# UUID را در داشبورد Cloudflare به‌صورت Secret/Variable تنظیم کنید:
+# UUID = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+# PATH = "/vless"
+# PROXYIP = "اختیاری"

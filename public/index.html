@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MYX panel | ساخت کانفیگ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="brand-mark">M</span>
+      <span class="brand-name">MYX <b>panel</b></span>
+    </div>
+    <div class="hero-badge"><span></span> سریع، خصوصی و آماده اتصال</div>
+    <h1>کانفیگت را بساز.<br/><em>همین حالا وصل شو.</em></h1>
+    <p class="subtitle">تجربه‌ای ساده برای ساخت کانفیگ‌های Xray و Cloudflare Worker<br/>بدون پیچیدگی، بدون ارسال داده به سرور دیگری.</p>
+    <div class="hero-features">
+      <span>☁️ پشتیبانی Cloudflare</span>
+      <span>📱 اتصال با QR Code</span>
+      <span>🔒 خصوصی و امن</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ ستون فرم ============ -->
+    <div class="col">
+      <section class="card">
+        <div class="step-title"><span class="step-num">۱</span> انتخاب قالب کانفیگ</div>
+        <p class="hint">با انتخاب قالب، همه تنظیمات فنی به‌صورت خودکار انجام می‌شود.</p>
+        <div class="presets">
+          <button class="preset worker-preset" id="workerPreset" type="button">
+            <span class="preset-name">☁️ Cloudflare Worker</span>
+            <span class="preset-desc" id="workerPresetDesc">اتصال به همین ورکر/پیجز (بدون VPS) — اگر روی Cloudflare باز شده باشد، خودکار پر می‌شود</span>
+          </button>
+          <button class="preset" data-preset="vless-reality">
+            <span class="preset-name">VLESS + Reality</span>
+            <span class="preset-desc">پیشنهادی · پایدارترین، بدون نیاز به دامنه</span>
+          </button>
+          <button class="preset" data-preset="vless-ws-tls">
+            <span class="preset-name">VLESS + WS + TLS</span>
+            <span class="preset-desc">مناسب استفاده پشت CDN (مثل Cloudflare)</span>
+          </button>
+          <button class="preset" data-preset="trojan-ws-tls">
+            <span class="preset-name">Trojan + WS + TLS</span>
+            <span class="preset-desc">ساده و سازگار، پشت CDN</span>
+          </button>
+          <button class="preset" data-preset="vmess-ws-tls">
+            <span class="preset-name">VMess + WS + TLS</span>
+            <span class="preset-desc">سازگاری بیشتر با کلاینت‌های قدیمی</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="step-title"><span class="step-num">۲</span> مشخصات سرور</div>
+        <div class="grid">
+          <label>
+            <span>پروتکل</span>
+            <select id="protocol">
+              <option value="vless">VLESS</option>
+              <option value="vmess">VMess</option>
+              <option value="trojan">Trojan</option>
+            </select>
+          </label>
+          <label>
+            <span>نام کانفیگ (Remark)</span>
+            <input id="remark" type="text" placeholder="MyServer" value="MyServer" />
+          </label>
+          <label class="full">
+            <span>آدرس سرور <b class="req">*</b></span>
+            <input id="address" type="text" placeholder="مثلاً 1.2.3.4 یا server.example.com" dir="ltr" />
+          </label>
+          <label>
+            <span>پورت</span>
+            <input id="port" type="number" value="443" min="1" max="65535" dir="ltr" />
+          </label>
+          <label>
+            <span id="idLabel">UUID <b class="req">*</b></span>
+            <div class="row">
+              <input id="uuid" type="text" placeholder="UUID" dir="ltr" />
+              <button type="button" id="genUuid" class="btn small ghost" title="تولید UUID تصادفی">🎲</button>
+            </div>
+          </label>
+        </div>
+
+        <details id="advanced">
+          <summary>⚙️ تنظیمات پیشرفته <span class="summary-hint">(با قالب بالا خودکار پر می‌شود)</span></summary>
+
+          <h3>اتصال و امنیت</h3>
+          <div class="grid">
+            <label>
+              <span>نوع شبکه (Transport)</span>
+              <select id="network">
+                <option value="tcp">TCP</option>
+                <option value="ws">WebSocket</option>
+                <option value="httpupgrade">HTTPUpgrade</option>
+                <option value="grpc">gRPC</option>
+              </select>
+            </label>
+            <label>
+              <span>Security</span>
+              <select id="security">
+                <option value="none">none</option>
+                <option value="tls">TLS</option>
+                <option value="reality">REALITY</option>
+              </select>
+            </label>
+            <label id="encryptionWrap">
+              <span>Encryption (فقط VLESS)</span>
+              <select id="encryption">
+                <option value="none">none</option>
+                <option value="aes-128-gcm">aes-128-gcm</option>
+                <option value="chacha20-poly1305">chacha20-poly1305</option>
+              </select>
+            </label>
+            <label id="flowWrap">
+              <span>Flow</span>
+              <select id="flow">
+                <option value="">بدون flow</option>
+                <option value="xtls-rprx-vision">xtls-rprx-vision</option>
+              </select>
+            </label>
+            <label>
+              <span>Mux</span>
+              <select id="mux">
+                <option value="off">خاموش</option>
+                <option value="on">روشن (۸ کانال)</option>
+              </select>
+            </label>
+          </div>
+
+          <div id="tlsBlock">
+            <h3 id="tlsTitle">تنظیمات TLS</h3>
+            <div class="grid">
+              <label>
+                <span>SNI</span>
+                <input id="sni" type="text" placeholder="example.com" dir="ltr" />
+              </label>
+              <label>
+                <span>ALPN</span>
+                <select id="alpn">
+                  <option value="">خالی</option>
+                  <option value="h2,http/1.1">h2,http/1.1</option>
+                  <option value="h2">h2</option>
+                  <option value="http/1.1">http/1.1</option>
+                </select>
+              </label>
+              <label>
+                <span>Fingerprint</span>
+                <select id="fingerprint">
+                  <option value="chrome">chrome</option>
+                  <option value="firefox">firefox</option>
+                  <option value="safari">safari</option>
+                  <option value="ios">ios</option>
+                  <option value="android">android</option>
+                  <option value="edge">edge</option>
+                  <option value="random">random</option>
+                  <option value="">بدون fp</option>
+                </select>
+              </label>
+              <label>
+                <span>Allow Insecure</span>
+                <select id="allowInsecure">
+                  <option value="false">خیر</option>
+                  <option value="true">بله</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="grid" id="realityFields" hidden>
+            <label>
+              <span>Public Key (pbk) <b class="req">*</b></span>
+              <input id="pbk" type="text" placeholder="کلید عمومی Reality" dir="ltr" />
+            </label>
+            <label>
+              <span>Short ID (sid)</span>
+              <input id="sid" type="text" dir="ltr" />
+            </label>
+            <label>
+              <span>Spider Path (spx)</span>
+              <input id="spx" type="text" value="/" dir="ltr" />
+            </label>
+            <label>
+              <span>Target (dest)</span>
+              <input id="dest" type="text" placeholder="www.microsoft.com:443" dir="ltr" />
+            </label>
+          </div>
+
+          <h3>تنظیمات شبکه</h3>
+          <div class="grid">
+            <label class="wsField">
+              <span>Host (برای WS / CDN مهم است)</span>
+              <input id="host" type="text" placeholder="example.com" dir="ltr" />
+            </label>
+            <label class="wsField">
+              <span>Path</span>
+              <input id="path" type="text" value="/" dir="ltr" />
+            </label>
+            <label class="grpcField" hidden>
+              <span>Service Name</span>
+              <input id="serviceName" type="text" placeholder="my-service" dir="ltr" />
+            </label>
+          </div>
+
+          <h3>وارد کردن لینک موجود</h3>
+          <div class="import-box">
+            <input id="importLink" type="text" placeholder="لینک vless:// یا vmess:// یا trojan:// را اینجا بچسبانید" dir="ltr" />
+            <button type="button" class="btn ghost" id="doImport">وارد کردن</button>
+          </div>
+          <p class="hint" id="importMsg"></p>
+        </details>
+      </section>
+    </div>
+
+    <!-- ============ ستون خروجی ============ -->
+    <div class="col">
+      <section class="card sticky">
+        <div class="step-title"><span class="step-num">۳</span> دریافت کانفیگ</div>
+
+        <div id="status" class="status warn">برای ساخت کانفیگ، آدرس سرور و UUID را وارد کنید.</div>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="link">📱 لینک و QR</button>
+          <button class="tab" data-tab="json">📄 JSON</button>
+          <button class="tab" data-tab="sub">🔗 Sub</button>
+        </div>
+
+        <div class="tab-panel active" id="tab-link">
+          <div class="qr-wrap"><div id="qr"></div></div>
+          <p class="hint center">با اپ کلاینت (v2rayNG / Hiddify / Streisand) این QR را اسکن کنید یا لینک را کپی کنید.</p>
+          <pre id="linkOut" class="link-out" dir="ltr"></pre>
+          <div class="actions">
+            <button class="btn" id="copyLink">📋 کپی لینک</button>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-json">
+          <pre id="jsonOut" dir="ltr"></pre>
+          <div class="actions">
+            <button class="btn" id="copyJson">📋 کپی JSON</button>
+            <button class="btn ghost" id="dlJson">⬇️ دانلود config.json</button>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-sub">
+          <p class="hint">خروجی Base64 برای ساخت لینک سابسکریپشن. می‌توانید آن را دانلود و در همین سایت Netlify منتشر کنید.</p>
+          <pre id="subOut" dir="ltr"></pre>
+          <div class="actions">
+            <button class="btn" id="copySub">📋 کپی Base64</button>
+            <button class="btn ghost" id="dlSub">⬇️ دانلود sub.txt</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card guide">
+        <details>
+          <summary>❓ چطور وصل شوم؟</summary>
+          <ol>
+            <li>اگر پروژه را روی <b>Cloudflare Pages/Workers</b> باز کرده‌اید، قالب <b>☁️ Cloudflare Worker</b> را انتخاب کنید؛ آدرس، مسیر و UUID خودکار پر می‌شود و کانفیگ واقعاً به همین ورکر وصل می‌شود.</li>
+            <li>اگر سرور Xray روی VPS دارید، قالب <b>VLESS + Reality</b> را انتخاب و مشخصات سرورتان را وارد کنید.</li>
+            <li>روی گوشی: اپ <b>v2rayNG</b> (اندروید) یا <b>Hiddify / Streisand</b> (iOS) → گزینه <i>Add config from QR / Clipboard</i>.</li>
+            <li>روی کامپیوتر: <b>v2rayN / Hiddify / Nekoray</b> → درج لینک از کلیپ‌بورد یا وارد کردن فایل JSON.</li>
+            <li>سابسکریپشن روی Cloudflare: آدرس <code>/sub</code> را در کلاینت اضافه کنید. روی هاست استاتیک: فایل <code>sub.txt</code> را در ریشه سایت بگذارید و آدرس آن را وارد کنید.</li>
+          </ol>
+          <p class="hint">⚠️ Netlify فقط پنل سازنده کانفیگ را میزبانی می‌کند و پروکسی اجرا نمی‌کند. برای «کانفیگ وصل بدون VPS» از همین پروژه روی Cloudflare Pages/Workers استفاده کنید. کانفیگ‌های Worker از UDP پشتیبانی نمی‌کنند.</p>
+        </details>
+      </section>
+    </div>
+  </main>
+
+  <div id="toast" class="toast" hidden>کپی شد ✔</div>
+
+  <footer><b>MYX panel</b><span>•</span> سریع و ساده<span>•</span> داده‌ها فقط در مرورگر شماست</footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
